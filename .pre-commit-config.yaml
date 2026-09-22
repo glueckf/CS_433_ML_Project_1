@@ -1,0 +1,30 @@
+# Runs automatically on `git commit` after `make setup`.
+# These hooks are the cheap, local half of the same checks CI enforces.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      # The single most important hook here: makes it impossible to commit a
+      # dataset csv by accident.
+      - id: check-added-large-files
+        args: ["--maxkb=5000"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+
+  # Strips notebook outputs and execution counts before they reach git, so
+  # notebook diffs stay small and reviewable instead of becoming unmergeable
+  # blobs of base64 images.
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout

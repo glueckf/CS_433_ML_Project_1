@@ -1,0 +1,37 @@
+# --- Data -------------------------------------------------------------------
+# Never commit the dataset. x_train.csv alone is 227 MB; GitHub's hard limit is
+# 100 MB per file. Everyone downloads it from AIcrowd (see README.md) and
+# verifies it against data/MANIFEST.sha256.
+data/*
+!data/.gitkeep
+!data/MANIFEST.sha256
+
+# --- Generated artefacts ----------------------------------------------------
+submissions/
+github_workdir/
+grading_tests/
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# --- Notebooks --------------------------------------------------------------
+.ipynb_checkpoints/
+
+# --- LaTeX ------------------------------------------------------------------
+reports/*.aux
+reports/*.log
+reports/*.out
+reports/*.bbl
+reports/*.blg
+reports/*.synctex.gz
+
+# --- OS / editors -----------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/

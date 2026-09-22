@@ -1,0 +1,15 @@
+# Owners listed here are automatically asked to review any pull request that
+# touches the paths they own. Together with the branch protection rules, this
+# makes sure every change gets a second pair of eyes before it lands on main.
+#
+# This file grows as the team joins the repository.
+
+*                        @glueckf
+
+# Shared configuration. A change to a dependency pin or to CI affects
+# everyone's environment at once, so these are reviewed centrally rather than
+# changed in passing.
+/requirements.txt        @glueckf
+/requirements-dev.txt    @glueckf
+/.pre-commit-config.yaml @glueckf
+/.github/                @glueckf

@@ -1,0 +1,45 @@
+# Tooling configuration only.
+#
+# This project is deliberately NOT a pip-installable package: the graders clone
+# the repo and load implementations.py directly with a SourceFileLoader, with
+# the repo root on sys.path. Everything therefore has to work from a plain
+# clone with no install step, so `mlproject/` sits at the repo root rather than
+# under `src/`.
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+# helpers.py is provided by the course and is kept byte-identical to the
+# upstream file. We do not lint or reformat it.
+extend-exclude = ["helpers.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import sorting
+    "UP",  # pyupgrade
+    "B",   # bugbear
+    "SIM", # simplify
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+]
+ignore = [
+    "D203", # incompatible with D211
+    "D213", # incompatible with D212
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D103"]
+"scripts/*" = ["D100"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+# Matches black, which the course's optional formatting check uses.
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

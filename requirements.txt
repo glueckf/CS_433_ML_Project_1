@@ -1,0 +1,11 @@
+# Runtime dependencies for the graded submission.
+#
+# Project 1 allows the Python standard library and NumPy only. matplotlib is
+# permitted for visualisation exclusively -- it must never be imported by
+# implementations.py, run.py, or any mlproject module other than plots.py.
+# tests/test_spec_compliance.py enforces this.
+#
+# Versions are pinned exactly so all three of us and CI resolve identical
+# numerics. Only the repo owner edits this file (see .github/CODEOWNERS).
+numpy==2.3.3
+matplotlib==3.10.6
