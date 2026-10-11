@@ -176,8 +176,28 @@ def least_squares(y: np.ndarray, tx: np.ndarray) -> tuple[np.ndarray, np.floatin
         A tuple ``(w, loss)`` with the optimal weights, shape ``(D,)``, and
         their mean squared error as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    # *** YOUR CODE HERE *** #for testing you can modify it
+    a = tx.T.dot(tx)
+    b = tx.T.dot(y)
+    w = np.linalg.solve(a, b)
+    loss = compute_loss(y, tx, w)
+    return w, loss
+ 
+    
+def compute_loss(y, tx, w):  #for testing you can modify it
+    """Calculate the mean squared error (MSE).
+
+    Args:
+        y: labels of shape (N,)
+        tx: design matrix of shape (N, D)
+        w: model weights of shape (D,)
+
+    Returns:
+        loss: mean squared error
+    """
+    e = y - tx @ w
+    loss = (e @ e) / (2 * len(y))
+    return loss
 
 
 def ridge_regression(
