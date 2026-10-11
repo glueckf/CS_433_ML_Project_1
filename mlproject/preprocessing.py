@@ -114,7 +114,7 @@ def drop_high_missingness_columns(
     keep_mask = missing_fraction <= max_missing_fraction
 
     # print(f"Threshold: {max_missing_fraction:.0%} |
-    #  "f"Kept: {np.sum(keep_mask)} 
+    #  "f"Kept: {np.sum(keep_mask)}
     # / {x.shape[1]} | "f"Removed: {np.sum(~keep_mask)}")
 
     return x[:, keep_mask], keep_mask
@@ -186,17 +186,9 @@ def standardize(
         A tuple ``(x_standardized, mean, std)``.
     """
     # *** YOUR CODE HERE ***
-    mean = (
-        np.mean(x, axis=0)
-        if mean is None
-        else np.asarray(mean, dtype=float)
-    )
+    mean = np.mean(x, axis=0) if mean is None else np.asarray(mean, dtype=float)
 
-    std = (
-        np.std(x, axis=0)
-        if std is None
-        else np.asarray(std, dtype=float)
-    )
+    std = np.std(x, axis=0) if std is None else np.asarray(std, dtype=float)
 
     if mean.shape != (x.shape[1],) or std.shape != (x.shape[1],):
         raise ValueError("mean and std must have one value per feature.")

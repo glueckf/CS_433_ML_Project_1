@@ -205,7 +205,7 @@ def main():
     # 4. Inspect the 20 features with the most missing values
     print("\n===== TOP 20 FEATURES WITH MOST MISSING VALUES =====")
 
-    #most_missing = np.argsort(nan_ratio)[::-1]
+    # most_missing = np.argsort(nan_ratio)[::-1]
 
     # for j in most_missing[:20]:
     # print(f"{feature_names[j]:12s} | missing={nan_ratio[j]:.2%}")
@@ -242,7 +242,6 @@ def main():
 
     reports_dir = DATA_DIR.parent / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
-
 
     # 11. Export feature analysis to CSV
     output_path = reports_dir / "feature_analysis.csv"
