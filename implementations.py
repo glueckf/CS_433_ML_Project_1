@@ -182,9 +182,9 @@ def least_squares(y: np.ndarray, tx: np.ndarray) -> tuple[np.ndarray, np.floatin
     w = np.linalg.solve(a, b)
     loss = compute_loss(y, tx, w)
     return w, loss
- 
-    
-def compute_loss(y, tx, w):  #for testing you can modify it
+
+
+def compute_loss(y, tx, w):  # for testing you can modify it
     """Calculate the mean squared error (MSE).
 
     Args:

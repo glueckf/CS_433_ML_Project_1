@@ -1,6 +1,4 @@
-
-"""
-Exploratory Data Analysis for Project 1.
+"""Exploratory Data Analysis for Project 1.
 
 Run with: python EDA.py
 """
@@ -8,23 +6,30 @@ Run with: python EDA.py
 import csv
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from helpers import load_csv_data
 from mlproject.config import DATA_DIR, FIGURES_DIR
 
-
 # Candidate codes to inspect in the codebook. These are NOT automatically
 # treated as missing values: their meaning depends on the feature.
 CANDIDATE_SPECIAL_CODES = [
-    7, 9, 77, 99, 777, 999,
-    7777, 9999, 77777, 99999, 777777, 999999,
+    7,
+    9,
+    77,
+    99,
+    777,
+    999,
+    7777,
+    9999,
+    77777,
+    99999,
+    777777,
+    999999,
 ]
 
 
 def analyze_special_codes(x, feature_names, output_path, codes=None):
-    """
-    Export occurrences of candidate special codes without changing x.
+    """Export occurrences of candidate special codes without changing x.
 
     Output columns: feature, code, count, percentage.
     Use the codebook to decide which feature/code pairs truly mean missing.
@@ -52,7 +57,7 @@ def analyze_special_codes(x, feature_names, output_path, codes=None):
 
 def load_feature_names():
     """Read feature names from x_train.csv, excluding the ID column."""
-    with open(DATA_DIR / "x_train.csv", "r", encoding="utf-8") as f:
+    with open(DATA_DIR / "x_train.csv", encoding="utf-8") as f:
         feature_names = f.readline().strip().split(",")
 
     # load_csv_data removes the first column (ID).
@@ -92,23 +97,25 @@ def export_feature_analysis(x, feature_names, output_path):
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
 
-        writer.writerow([
-            "feature",
-            "missing_count",
-            "missing_ratio",
-            "unique_values",
-            "min",
-            "median",
-            "max",
-            "mean",
-            "std",
-            "count_7",
-            "count_9",
-            "count_77",
-            "count_99",
-            "count_777",
-            "count_999",
-        ])
+        writer.writerow(
+            [
+                "feature",
+                "missing_count",
+                "missing_ratio",
+                "unique_values",
+                "min",
+                "median",
+                "max",
+                "mean",
+                "std",
+                "count_7",
+                "count_9",
+                "count_77",
+                "count_99",
+                "count_777",
+                "count_999",
+            ]
+        )
 
         for j, name in enumerate(feature_names):
             col = x[:, j]
@@ -117,14 +124,25 @@ def export_feature_analysis(x, feature_names, output_path):
             missing_ratio = missing_count / len(col)
 
             if valid.size == 0:
-                writer.writerow([
-                    name,
-                    missing_count,
-                    missing_ratio,
-                    0,
-                    "", "", "", "", "",
-                    0, 0, 0, 0, 0, 0,
-                ])
+                writer.writerow(
+                    [
+                        name,
+                        missing_count,
+                        missing_ratio,
+                        0,
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    ]
+                )
                 continue
 
             stats = [
@@ -139,10 +157,7 @@ def export_feature_analysis(x, feature_names, output_path):
                 np.std(valid),
             ]
 
-            code_counts = [
-                int(np.sum(valid == code))
-                for code in special_codes
-            ]
+            code_counts = [int(np.sum(valid == code)) for code in special_codes]
 
             writer.writerow(stats + code_counts)
 
@@ -150,12 +165,11 @@ def export_feature_analysis(x, feature_names, output_path):
 
 
 def main():
+    """Run the exploratory data analysis."""
     # 1. Load dataset
     print("Loading dataset...")
 
-    x_train, x_test, y_train, train_ids, test_ids = load_csv_data(
-        str(DATA_DIR)
-    )
+    x_train, x_test, y_train, train_ids, test_ids = load_csv_data(str(DATA_DIR))
 
     print("\n===== DATASET SHAPES =====")
     print("x_train:", x_train.shape)
@@ -191,13 +205,13 @@ def main():
     # 4. Inspect the 20 features with the most missing values
     print("\n===== TOP 20 FEATURES WITH MOST MISSING VALUES =====")
 
-    most_missing = np.argsort(nan_ratio)[::-1]
+    #most_missing = np.argsort(nan_ratio)[::-1]
 
-    #for j in most_missing[:20]:
-       # print(f"{feature_names[j]:12s} | missing={nan_ratio[j]:.2%}")
+    # for j in most_missing[:20]:
+    # print(f"{feature_names[j]:12s} | missing={nan_ratio[j]:.2%}")
 
     # 5. Inspect all features
-    #inspect_features(x_train, feature_names)
+    # inspect_features(x_train, feature_names)
 
     # 6. Detect constant features among observed values
     constant_features = []
@@ -220,7 +234,7 @@ def main():
 
     print("\n===== CLASS DISTRIBUTION =====")
 
-    for label, count in zip(labels, counts):
+    for label, count in zip(labels, counts, strict=True):
         print(f"Label {label}: {count} ({count / len(y_train):.2%})")
 
     # 8. Create output directories
@@ -229,30 +243,6 @@ def main():
     reports_dir = DATA_DIR.parent / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    # 9. Plot distribution of missing values
-    plt.figure(figsize=(9, 5))
-    plt.hist(nan_ratio, bins=30, edgecolor="black")
-    plt.xlabel("Fraction of missing values")
-    plt.ylabel("Number of features")
-    plt.title("Missing-value distribution across features")
-    plt.tight_layout()
-    plt.savefig(FIGURES_DIR / "missing_values.png", dpi=150)
-    plt.close()
-
-    print("\nMissing-value plot saved to:", FIGURES_DIR / "missing_values.png")
-
-    # 10. Plot class distribution
-    plt.figure(figsize=(6, 4))
-    plt.bar(labels.astype(str), counts)
-    plt.xlabel("Class label")
-    plt.ylabel("Number of observations")
-    plt.title("Training class distribution")
-    plt.tight_layout()
-    plt.savefig(FIGURES_DIR / "class_distribution.png", dpi=150)
-    plt.close()
-
-    print("Class-distribution plot saved to:",
-          FIGURES_DIR / "class_distribution.png")
 
     # 11. Export feature analysis to CSV
     output_path = reports_dir / "feature_analysis.csv"
@@ -262,7 +252,7 @@ def main():
         feature_names,
         output_path,
     )
-    
+
     # 12. Count candidate special codes without replacing any values
     special_codes_path = reports_dir / "special_codes_analysis.csv"
     analyze_special_codes(
@@ -272,7 +262,6 @@ def main():
     )
 
     print("\n===== END EDA =====")
-
 
 
 if __name__ == "__main__":

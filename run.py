@@ -16,16 +16,14 @@ Prerequisites:
 
 import numpy as np
 
-from mlproject.config import RANDOM_SEED, DATA_DIR
 from helpers import load_csv_data
-from mlproject.preprocessing import (
-    stratified_split,
-    preprocess_data,
-    evaluate_baseline,
-)
 from implementations import least_squares
-
-
+from mlproject.config import DATA_DIR, RANDOM_SEED
+from mlproject.preprocessing import (
+    evaluate_baseline,
+    preprocess_data,
+    stratified_split,
+)
 
 
 def main() -> None:
@@ -51,9 +49,7 @@ def main() -> None:
 
     # 1. Load the dataset.
     print("Loading dataset...")
-    x_train, x_test, y_train, train_ids, test_ids = load_csv_data(
-        str(DATA_DIR)
-    )
+    x_train, x_test, y_train, train_ids, test_ids = load_csv_data(str(DATA_DIR))
     print("\n===== START PREPROCESS =====")
     # 2. Create a stratified training/validation split.
     x_tr, y_tr, x_val, y_val = stratified_split(
@@ -63,11 +59,12 @@ def main() -> None:
         seed=RANDOM_SEED,
     )
 
-   # 3. Preprocess training and validation data. #ratio will be optimize
-    x_tr_processed, x_val_processed = preprocess_data(x_tr,
-    x_val,
-    csv_path=str(DATA_DIR / "x_train.csv"),
-    threshold=0.97,
+    # 3. Preprocess training and validation data. #ratio will be optimize
+    x_tr_processed, x_val_processed = preprocess_data(
+        x_tr,
+        x_val,
+        csv_path=str(DATA_DIR / "x_train.csv"),
+        threshold=0.97,
     )
     print("Preprocessing completed.")
     print("Training shape:", x_tr_processed.shape)
@@ -75,19 +72,18 @@ def main() -> None:
 
     print("\n===== END PREPROCESS =====")
 
-    #for testing preprocess you can modify/change/delete it
+    # for testing preprocess you can modify/change/delete it
     w, train_loss = least_squares(y_tr, x_tr_processed)
     print(f"Training loss: {train_loss:.6f}")
     scores = x_val_processed @ w
-    classification_threshold = -0.6 #to test for preprocess
-    metrics = evaluate_baseline(y_val,scores,threshold=classification_threshold)
+    classification_threshold = -0.6  # to test for preprocess
+    metrics = evaluate_baseline(y_val, scores, threshold=classification_threshold)
     print("\n===== RESULTS =====")
     print(f"Threshold: {classification_threshold:.4f}")
     print(f"Accuracy:  {metrics['accuracy']:.4f}")
     print(f"Precision: {metrics['precision']:.4f}")
     print(f"Recall:    {metrics['recall']:.4f}")
     print(f"F1-score:  {metrics['f1']:.4f}")
-    
 
 
 if __name__ == "__main__":
