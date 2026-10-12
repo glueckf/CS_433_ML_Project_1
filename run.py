@@ -64,27 +64,27 @@ def main() -> None:
     use_one_hot = True
     use_bias = True
     use_special_codes = True
-    use_augmented_input = False #does not work well for Leastsquare for the moment
+    use_augmented_input = False  # does not work well for Leastsquare for the moment
 
     x_tr_processed, x_val_processed = preprocess_data(
         x_tr,
         x_val,
         csv_path=str(DATA_DIR / "x_train.csv"),
-        threshold=0.80, #will be optimize later when all model are setup
+        threshold=0.80,  # will be optimize later when all model are setup
         use_one_hot=use_one_hot,
         use_bias=use_bias,
         use_special_codes=use_special_codes,
         use_augmented_input=use_augmented_input,
     )
     print("Preprocessing completed.")
-    #print("Training shape:", x_tr_processed.shape)
-    #print("Validation shape:", x_val_processed.shape)
+    # print("Training shape:", x_tr_processed.shape)
+    # print("Validation shape:", x_val_processed.shape)
 
     print("===== END PREPROCESS =====\n")
 
     # for testing preprocess you can modify/change/delete it
     w, train_loss = least_squares(y_tr, x_tr_processed)
-    #print(f"Training loss: {train_loss:.6f}")
+    # print(f"Training loss: {train_loss:.6f}")
     scores = x_val_processed @ w
     classification_threshold = -0.6  # to test for preprocess
     metrics = evaluate_baseline(y_val, scores, threshold=classification_threshold)

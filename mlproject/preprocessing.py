@@ -54,31 +54,25 @@ def one_hot_encode_train_val(
 
     # Check that the number of feature names matches the matrix dimensions.
     if x_train.shape[1] != len(feature_names):
-        raise ValueError(
-            "The number of feature names does not match x_train."
-        )
+        raise ValueError("The number of feature names does not match x_train.")
 
     if x_val.shape[1] != len(feature_names):
-        raise ValueError(
-            "The number of feature names does not match x_val."
-        )
+        raise ValueError("The number of feature names does not match x_val.")
 
     # Identify categorical features present in the matrices.
     categorical_indices = [
-        i for i, name in enumerate(feature_names)
-        if name in categorical_set
+        i for i, name in enumerate(feature_names) if name in categorical_set
     ]
 
-    #missing_features = categorical_set - set(feature_names)
+    # missing_features = categorical_set - set(feature_names)
 
-    #if missing_features:
-        #print("Categorical features not found:",
-        # sorted(missing_features),)
+    # if missing_features:
+    # print("Categorical features not found:",
+    # sorted(missing_features),)
 
     # Keep all non-categorical features unchanged.
     numerical_indices = [
-        i for i, name in enumerate(feature_names)
-        if name not in categorical_set
+        i for i, name in enumerate(feature_names) if name not in categorical_set
     ]
 
     train_parts = []
@@ -89,9 +83,7 @@ def one_hot_encode_train_val(
         train_parts.append(x_train[:, numerical_indices])
         val_parts.append(x_val[:, numerical_indices])
 
-        encoded_feature_names.extend(
-            feature_names[i] for i in numerical_indices
-        )
+        encoded_feature_names.extend(feature_names[i] for i in numerical_indices)
 
     # Learn categories from the training set only.
     for idx in categorical_indices:
@@ -114,20 +106,17 @@ def one_hot_encode_train_val(
         # Create binary columns for all remaining categories.
         encoded_categories = categories[1:]
 
-        train_encoded = (
-            train_col[:, None] == encoded_categories[None, :]
-        ).astype(float)
+        train_encoded = (train_col[:, None] == encoded_categories[None, :]).astype(
+            float
+        )
 
-        val_encoded = (
-            val_col[:, None] == encoded_categories[None, :]
-        ).astype(float)
+        val_encoded = (val_col[:, None] == encoded_categories[None, :]).astype(float)
 
         train_parts.append(train_encoded)
         val_parts.append(val_encoded)
 
         encoded_feature_names.extend(
-            f"{feature_name}_{category:g}"
-            for category in encoded_categories
+            f"{feature_name}_{category:g}" for category in encoded_categories
         )
 
     x_train_encoded = np.concatenate(train_parts, axis=1)
@@ -391,6 +380,7 @@ def drop_duplicate_columns(
 
     return x_train, x_val, keep_mask
 
+
 # for TEST must be delete
 def evaluate_baseline(y_true, predictions, threshold=0):
     """Print basic classification metrics using threshold zero."""
@@ -450,19 +440,13 @@ def augment_inputs_train_val(
     quantitative_set = set(quantitative_features)
 
     if x_train.shape[1] != len(feature_names):
-        raise ValueError(
-            "The number of feature names does not match x_train."
-        )
+        raise ValueError("The number of feature names does not match x_train.")
 
     if x_val.shape[1] != len(feature_names):
-        raise ValueError(
-            "The number of feature names does not match x_val."
-        )
-
+        raise ValueError("The number of feature names does not match x_val.")
 
     numeric_indices = [
-        i for i, name in enumerate(feature_names)
-        if name in quantitative_set
+        i for i, name in enumerate(feature_names) if name in quantitative_set
     ]
 
     if not numeric_indices:
@@ -474,8 +458,8 @@ def augment_inputs_train_val(
     x_val_numeric = x_val[:, numeric_indices]
 
     # Compute squared features.
-    x_train_squared = x_train_numeric ** 2
-    x_val_squared = x_val_numeric ** 2
+    x_train_squared = x_train_numeric**2
+    x_val_squared = x_val_numeric**2
 
     # Append squared features to the original matrices.
     x_train_augmented = np.concatenate(
@@ -488,25 +472,17 @@ def augment_inputs_train_val(
         axis=1,
     )
 
-    squared_feature_names = [
-        f"{feature_names[i]}_squared"
-        for i in numeric_indices
-    ]
+    squared_feature_names = [f"{feature_names[i]}_squared" for i in numeric_indices]
 
-    augmented_feature_names = (
-        feature_names + squared_feature_names
-    )
+    augmented_feature_names = feature_names + squared_feature_names
 
-    print(
-        f"Added {len(squared_feature_names)} squared features."
-    )
+    print(f"Added {len(squared_feature_names)} squared features.")
 
     return (
         x_train_augmented,
         x_val_augmented,
         augmented_feature_names,
     )
-
 
 
 def preprocess_data(
@@ -532,9 +508,7 @@ def preprocess_data(
         )
 
     if x_train.shape[1] != x_val.shape[1]:
-        raise ValueError(
-            "Training and validation have different feature counts."
-        )
+        raise ValueError("Training and validation have different feature counts.")
 
     # 2. Replace documented special codes with NaN.
     if use_special_codes:
@@ -568,14 +542,11 @@ def preprocess_data(
     ]
 
     # 6. Remove duplicate columns.
-    x_train, x_val, duplicate_mask = drop_duplicate_columns(
-        x_train, x_val
-    )
+    x_train, x_val, duplicate_mask = drop_duplicate_columns(x_train, x_val)
 
     feature_names = [
-        name for name, keep in zip(feature_names, duplicate_mask, strict=True)
-        if keep
-        ]
+        name for name, keep in zip(feature_names, duplicate_mask, strict=True) if keep
+    ]
 
     # 7. Augment input features with squared terms.
     if use_augmented_input:
@@ -612,7 +583,6 @@ def preprocess_data(
     else:
         print("Bias column skipped.")
 
-
     # 10. Check the output.
     if not np.all(np.isfinite(x_train)):
         raise ValueError("x_train contains NaN or infinite values.")
@@ -620,7 +590,7 @@ def preprocess_data(
     if not np.all(np.isfinite(x_val)):
         raise ValueError("x_val contains NaN or infinite values.")
 
-    #print("Final training shape:", x_train.shape)
-    #print("Final validation shape:", x_val.shape)
+    # print("Final training shape:", x_train.shape)
+    # print("Final validation shape:", x_val.shape)
 
     return x_train, x_val

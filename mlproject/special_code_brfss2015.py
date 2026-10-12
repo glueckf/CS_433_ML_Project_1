@@ -294,11 +294,23 @@ CATEGORICAL_FEATURES = [
 ]
 
 QUANTITATIVE_FEATURES = [
-    "PHYSHLTH", "MENTHLTH", "POORHLTH",
-    "AVEDRNK2", "MAXDRNKS", "CHILDREN", "NUMADULT",
-    "PA1MIN_", "PAMIN11_", "PAMIN21_",
-    "HTIN4", "HTM4", "WTKG3", "_BMI5", "_FRUTSUM",
+    "PHYSHLTH",
+    "MENTHLTH",
+    "POORHLTH",
+    "AVEDRNK2",
+    "MAXDRNKS",
+    "CHILDREN",
+    "NUMADULT",
+    "PA1MIN_",
+    "PAMIN11_",
+    "PAMIN21_",
+    "HTIN4",
+    "HTM4",
+    "WTKG3",
+    "_BMI5",
+    "_FRUTSUM",
 ]
+
 
 def get_special_codes(feature_names):
     """Return a copy of the special-code map restricted to given feature names."""
@@ -306,7 +318,6 @@ def get_special_codes(feature_names):
     return {
         name: sorted(SPECIAL_CODES[name]) for name in SPECIAL_CODES if name in names
     }
-
 
 
 def replace_special_codes(x, feature_names):
@@ -340,4 +351,3 @@ def replace_special_codes(x, feature_names):
             out[out[:, j] == code, j] = np.nan
 
     return out
-
