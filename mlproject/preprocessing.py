@@ -11,8 +11,133 @@ import csv
 import numpy as np
 
 from mlproject.special_code_brfss2015 import (
+    CATEGORICAL_FEATURES,
+    QUANTITATIVE_FEATURES,
     replace_special_codes,
 )
+
+
+def one_hot_encode_train_val(
+    x_train,
+    x_val,
+    feature_names,
+    categorical_features=CATEGORICAL_FEATURES,
+):
+    """Apply One-Hot Encoding to selected categorical features.
+
+    Categories are learned from the training set only.
+    The same encoded columns are then used for the validation set.
+    Categories that appear only in the validation set are ignored.
+
+    Parameters
+    ----------
+    x_train : ndarray, shape (n_train, n_features)
+        Training feature matrix.
+    x_val : ndarray, shape (n_val, n_features)
+        Validation feature matrix.
+    feature_names : list of str
+        Names of the columns in x_train and x_val.
+    categorical_features : list of str
+        Names of the features to encode.
+
+    Returns:
+    -------
+    x_train_encoded : ndarray
+        Encoded training feature matrix.
+    x_val_encoded : ndarray
+        Encoded validation feature matrix.
+    encoded_feature_names : list of str
+        Names of the resulting features.
+    """
+    feature_names = list(feature_names)
+    categorical_set = set(categorical_features)
+
+    # Check that the number of feature names matches the matrix dimensions.
+    if x_train.shape[1] != len(feature_names):
+        raise ValueError(
+            "The number of feature names does not match x_train."
+        )
+
+    if x_val.shape[1] != len(feature_names):
+        raise ValueError(
+            "The number of feature names does not match x_val."
+        )
+
+    # Identify categorical features present in the matrices.
+    categorical_indices = [
+        i for i, name in enumerate(feature_names)
+        if name in categorical_set
+    ]
+
+    #missing_features = categorical_set - set(feature_names)
+
+    #if missing_features:
+        #print("Categorical features not found:",
+        # sorted(missing_features),)
+
+    # Keep all non-categorical features unchanged.
+    numerical_indices = [
+        i for i, name in enumerate(feature_names)
+        if name not in categorical_set
+    ]
+
+    train_parts = []
+    val_parts = []
+    encoded_feature_names = []
+
+    if numerical_indices:
+        train_parts.append(x_train[:, numerical_indices])
+        val_parts.append(x_val[:, numerical_indices])
+
+        encoded_feature_names.extend(
+            feature_names[i] for i in numerical_indices
+        )
+
+    # Learn categories from the training set only.
+    for idx in categorical_indices:
+        feature_name = feature_names[idx]
+
+        train_col = x_train[:, idx]
+        val_col = x_val[:, idx]
+
+        # Missing values must be handled before encoding.
+        if np.isnan(train_col).any() or np.isnan(val_col).any():
+            raise ValueError(
+                f"Feature '{feature_name}' still contains NaN values. "
+                "Impute missing values before One-Hot Encoding."
+            )
+
+        categories = np.unique(train_col)
+
+        # Create one binary column for each category found in training.
+        # Keep the first category as the reference category.
+        # Create binary columns for all remaining categories.
+        encoded_categories = categories[1:]
+
+        train_encoded = (
+            train_col[:, None] == encoded_categories[None, :]
+        ).astype(float)
+
+        val_encoded = (
+            val_col[:, None] == encoded_categories[None, :]
+        ).astype(float)
+
+        train_parts.append(train_encoded)
+        val_parts.append(val_encoded)
+
+        encoded_feature_names.extend(
+            f"{feature_name}_{category:g}"
+            for category in encoded_categories
+        )
+
+    x_train_encoded = np.concatenate(train_parts, axis=1)
+    x_val_encoded = np.concatenate(val_parts, axis=1)
+
+    return (
+        x_train_encoded,
+        x_val_encoded,
+        encoded_feature_names,
+    )
 
 
 def detect_special_code_candidates(x, feature_names, max_unique_values=20):
@@ -266,86 +391,6 @@ def drop_duplicate_columns(
 
     return x_train, x_val, keep_mask
 
-
-def preprocess_data(
-    x_train,
-    x_val,
-    csv_path,
-    threshold=0.97,
-):
-    """Preprocess training and validation data."""
-    print("\n===== PREPROCESSING =====")
-
-    # 1. Load feature names.
-    feature_names = load_feature_names(csv_path)
-
-    if len(feature_names) != x_train.shape[1]:
-        raise ValueError(
-            f"Feature mismatch: {len(feature_names)} names "
-            f"for {x_train.shape[1]} columns."
-        )
-
-    if x_train.shape[1] != x_val.shape[1]:
-        raise ValueError("Training and validation have different feature counts.")
-
-    # 2. Replace documented special codes with NaN.
-    x_train = replace_special_codes(x_train, feature_names)
-    x_val = replace_special_codes(x_val, feature_names)
-
-    # print("Special codes replaced.")
-
-    # 3. Remove columns with too many missing values.
-    x_train, keep_mask = drop_high_missingness_columns(
-        x_train,
-        max_missing_fraction=threshold,
-    )
-
-    x_val = x_val[:, keep_mask]
-
-    # Fit imputation values on training data only.
-    x_train, fill_values = impute_missing(x_train)
-
-    # Apply the same values to validation data.
-    x_val, _ = impute_missing(x_val, fill_values)
-
-    # 5. Remove constant columns.
-    # Remove constant columns based on training data only.
-    x_train, keep_mask = drop_constant_columns(x_train)
-
-    # Apply the same mask to validation data.
-    x_val = x_val[:, keep_mask]
-
-    # Remove exact duplicate columns.
-    x_train, x_val, duplicate_mask = drop_duplicate_columns(x_train, x_val)
-
-    print(
-        "Duplicate columns removed:",
-        np.sum(~duplicate_mask),
-    )
-    # 6. Standardize using training statistics only.
-    #
-
-    x_train, mean, std = standardize(x_train)
-    x_val, _, _ = standardize(x_val, mean=mean, std=std)
-    print("Data standardized.")
-
-    # 7. Add bias column.
-    x_train = add_bias_column(x_train)
-    x_val = add_bias_column(x_val)
-    print("Bias column added.")
-    # 8. Check the output.
-    if not np.all(np.isfinite(x_train)):
-        raise ValueError("x_train contains NaN or infinite values.")
-
-    if not np.all(np.isfinite(x_val)):
-        raise ValueError("x_val contains NaN or infinite values.")
-
-    print("Final training shape:", x_train.shape)
-    print("Final validation shape:", x_val.shape)
-
-    return x_train, x_val
-
-
 # for TEST must be delete
 def evaluate_baseline(y_true, predictions, threshold=0):
     """Print basic classification metrics using threshold zero."""
@@ -368,3 +413,214 @@ def evaluate_baseline(y_true, predictions, threshold=0):
         "recall": recall,
         "f1": f1,
     }
+
+
+def augment_inputs_train_val(
+    x_train,
+    x_val,
+    feature_names,
+    quantitative_features=QUANTITATIVE_FEATURES,
+):
+    """Augment the input features with their squared values.
+
+    Categorical features are excluded from the augmentation.
+    The original features are preserved.
+
+    Parameters
+    ----------
+    x_train : ndarray, shape (n_train, n_features)
+        Training feature matrix.
+    x_val : ndarray, shape (n_val, n_features)
+        Validation feature matrix.
+    feature_names : list of str
+        Names of the input features.
+    quantitative_features : list of str
+    Quantitative features whose squared values are appended.
+
+    Returns:
+    -------
+    x_train_augmented : ndarray
+        Training matrix with original and squared features.
+    x_val_augmented : ndarray
+        Validation matrix with original and squared features.
+    augmented_feature_names : list of str
+        Names of the original and squared features.
+    """
+    feature_names = list(feature_names)
+    quantitative_set = set(quantitative_features)
+
+    if x_train.shape[1] != len(feature_names):
+        raise ValueError(
+            "The number of feature names does not match x_train."
+        )
+
+    if x_val.shape[1] != len(feature_names):
+        raise ValueError(
+            "The number of feature names does not match x_val."
+        )
+
+
+    numeric_indices = [
+        i for i, name in enumerate(feature_names)
+        if name in quantitative_set
+    ]
+
+    if not numeric_indices:
+        print("No features selected for augmentation.")
+        return x_train, x_val, feature_names
+
+    # Extract the features to square.
+    x_train_numeric = x_train[:, numeric_indices]
+    x_val_numeric = x_val[:, numeric_indices]
+
+    # Compute squared features.
+    x_train_squared = x_train_numeric ** 2
+    x_val_squared = x_val_numeric ** 2
+
+    # Append squared features to the original matrices.
+    x_train_augmented = np.concatenate(
+        [x_train, x_train_squared],
+        axis=1,
+    )
+
+    x_val_augmented = np.concatenate(
+        [x_val, x_val_squared],
+        axis=1,
+    )
+
+    squared_feature_names = [
+        f"{feature_names[i]}_squared"
+        for i in numeric_indices
+    ]
+
+    augmented_feature_names = (
+        feature_names + squared_feature_names
+    )
+
+    print(
+        f"Added {len(squared_feature_names)} squared features."
+    )
+
+    return (
+        x_train_augmented,
+        x_val_augmented,
+        augmented_feature_names,
+    )
+
+
+
+def preprocess_data(
+    x_train,
+    x_val,
+    csv_path,
+    threshold=0.97,
+    use_one_hot=False,
+    use_bias=True,
+    use_special_codes=True,
+    use_augmented_input=False,
+):
+    """Preprocess training and validation data."""
+    print("===== PREPROCESSING =====")
+
+    # 1. Load feature names.
+    feature_names = load_feature_names(csv_path)
+
+    if len(feature_names) != x_train.shape[1]:
+        raise ValueError(
+            f"Feature mismatch: {len(feature_names)} names "
+            f"for {x_train.shape[1]} columns."
+        )
+
+    if x_train.shape[1] != x_val.shape[1]:
+        raise ValueError(
+            "Training and validation have different feature counts."
+        )
+
+    # 2. Replace documented special codes with NaN.
+    if use_special_codes:
+        x_train = replace_special_codes(x_train, feature_names)
+        x_val = replace_special_codes(x_val, feature_names)
+        print("Special codes replaced.")
+    else:
+        print("Special code replacement skipped.")
+
+    # 3. Remove columns with too many missing values.
+    x_train, keep_mask = drop_high_missingness_columns(
+        x_train,
+        max_missing_fraction=threshold,
+    )
+    x_val = x_val[:, keep_mask]
+
+    feature_names = [
+        name for name, keep in zip(feature_names, keep_mask, strict=True) if keep
+    ]
+
+    # 4. Impute missing values using training statistics only.
+    x_train, fill_values = impute_missing(x_train)
+    x_val, _ = impute_missing(x_val, fill_values)
+
+    # 5. Remove constant columns.
+    x_train, keep_mask = drop_constant_columns(x_train)
+    x_val = x_val[:, keep_mask]
+
+    feature_names = [
+        name for name, keep in zip(feature_names, keep_mask, strict=True) if keep
+    ]
+
+    # 6. Remove duplicate columns.
+    x_train, x_val, duplicate_mask = drop_duplicate_columns(
+        x_train, x_val
+    )
+
+    feature_names = [
+        name for name, keep in zip(feature_names, duplicate_mask, strict=True)
+        if keep
+        ]
+
+    # 7. Augment input features with squared terms.
+    if use_augmented_input:
+        x_train, x_val, feature_names = augment_inputs_train_val(
+            x_train,
+            x_val,
+            feature_names,
+        )
+        print("Augmented inputs applied.")
+    else:
+        print("Augmented inputs skipped.")
+
+    # 8. Apply One-Hot Encoding.
+    if use_one_hot:
+        x_train, x_val, feature_names = one_hot_encode_train_val(
+            x_train,
+            x_val,
+            feature_names,
+        )
+        print("One-Hot Encoding applied.")
+    else:
+        print("One-Hot Encoding skipped.")
+
+    # 9. Standardize using training statistics only.
+    x_train, mean, std = standardize(x_train)
+    x_val, _, _ = standardize(x_val, mean=mean, std=std)
+    print("Data standardized.")
+
+    # 10. Add bias column.
+    if use_bias:
+        x_train = add_bias_column(x_train)
+        x_val = add_bias_column(x_val)
+        print("Bias column added.")
+    else:
+        print("Bias column skipped.")
+
+
+    # 10. Check the output.
+    if not np.all(np.isfinite(x_train)):
+        raise ValueError("x_train contains NaN or infinite values.")
+
+    if not np.all(np.isfinite(x_val)):
+        raise ValueError("x_val contains NaN or infinite values.")
+
+    #print("Final training shape:", x_train.shape)
+    #print("Final validation shape:", x_val.shape)
+
+    return x_train, x_val

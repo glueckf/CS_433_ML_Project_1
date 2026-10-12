@@ -228,7 +228,7 @@ SPECIAL_CODES = {
     "BLOODCHO": [7, 9],
     "ASTHMA3": [7, 9],
     "DIABETE3": [7, 9],
-    "NUMHHOLD2": [7, 9],
+    "NUMHHOL2": [7, 9],
     "SMOKE100": [7, 9],
     "SMOKDAY2": [7, 9],
     "ALCDAY5": [777, 999],
@@ -250,9 +250,55 @@ SPECIAL_CODES = {
     "HADSIGM3": [7, 9],
     "PSATEST1": [7, 9],
     "SCNTWRK1": [97, 99],
+    "STOPSMK2": [7, 9],
     "CASTHDX2": [7, 9],
 }
 
+CATEGORICAL_FEATURES = [
+    "SEX",
+    "MARITAL",
+    "RENTHOM1",
+    "EMPLOY1",
+    "PREGNANT",
+    "QLACTLM2",
+    "USEEQUIP",
+    "BLIND",
+    "DECIDE",
+    "DIFFWALK",
+    "DIFFDRES",
+    "DIFFALON",
+    "SMOKE100",
+    "SMOKDAY2",
+    "USENOW3",
+    "EXERANY2",
+    "SEATBELT",
+    "FLUSHOT6",
+    "PNEUVAC3",
+    "HIVTST6",
+    "DIABETE3",
+    "BPHIGH4",
+    "BLOODCHO",
+    "ASTHMA3",
+    "CVDSTRK3",
+    "CHCSCNCR",
+    "CHCOCNCR",
+    "CHCCOPD1",
+    "HAVARTH3",
+    "ADDEPEV2",
+    "CHCKIDNY",
+    "HLTHPLN1",
+    "MEDCOST",
+    "PERSDOC2",
+    "INTERNET",
+    "VETERAN3",
+]
+
+QUANTITATIVE_FEATURES = [
+    "PHYSHLTH", "MENTHLTH", "POORHLTH",
+    "AVEDRNK2", "MAXDRNKS", "CHILDREN", "NUMADULT",
+    "PA1MIN_", "PAMIN11_", "PAMIN21_",
+    "HTIN4", "HTM4", "WTKG3", "_BMI5", "_FRUTSUM",
+]
 
 def get_special_codes(feature_names):
     """Return a copy of the special-code map restricted to given feature names."""
@@ -262,8 +308,9 @@ def get_special_codes(feature_names):
     }
 
 
+
 def replace_special_codes(x, feature_names):
-    """Replace documented special codes with NaN in a copy of x."""
+    """Replace documented special codes with NaN and handle valid zero codes."""
     out = np.array(x, dtype=float, copy=True)
 
     if out.ndim != 2 or out.shape[1] != len(feature_names):
@@ -273,8 +320,24 @@ def replace_special_codes(x, feature_names):
         )
 
     for j, name in enumerate(feature_names):
-        codes = SPECIAL_CODES.get(str(name).strip(), ())
+        name = str(name).strip()
+
+        # 88 means zero days for these health variables.
+        if name in ["PHYSHLTH", "MENTHLTH", "POORHLTH"]:
+            out[out[:, j] == 88, j] = 0
+
+        # 88 means no children for CHILDREN.
+        if name == "CHILDREN":
+            out[out[:, j] == 88, j] = 0
+
+        # Replace the other documented special codes with NaN
+        codes = SPECIAL_CODES.get(name, ())
         for code in codes:
+            # Do not replace 88 with NaN for the variables above
+            if code == 88 and name in ["PHYSHLTH", "MENTHLTH", "POORHLTH"]:
+                continue
+
             out[out[:, j] == code, j] = np.nan
 
     return out
+
