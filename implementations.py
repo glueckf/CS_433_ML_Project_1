@@ -118,8 +118,7 @@ def compute_logistic_gradient(
     Returns:
         The gradient with respect to ``w``, shape ``(D,)``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    return tx.T.dot(sigmoid(tx.dot(w)) - y) / len(y)
 
 
 def mean_squared_error_gd(
