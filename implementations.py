@@ -36,8 +36,14 @@ def compute_mse(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.floating:
     Returns:
         The mean squared error as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    # Compute the prediction
+    pred = tx.dot(w)
+
+    # Compute the error
+    err = y - pred
+
+    # Compute MSE
+    return err.dot(err) / (2*len(err))
 
 
 def compute_mse_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray:
