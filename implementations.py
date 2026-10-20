@@ -78,8 +78,12 @@ def sigmoid(t: np.ndarray) -> np.ndarray:
     Returns:
         ``sigmoid(t)``, same shape as ``t``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    t = np.asarray(t, dtype=float)
+
+    # In (0,1], never overflows
+    z = np.exp(-np.abs(t))
+    # If t >= 0: z = exp(-t); If t < 0: z = exp(t), Both forms equal sigmoid(t). 
+    return np.where(t >= 0, 1/(1+z), z/(1+z))
 
 
 def compute_logistic_loss(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.floating:
