@@ -57,8 +57,12 @@ def compute_mse_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.nda
     Returns:
         The gradient with respect to ``w``, shape ``(D,)``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    # Compute error 
+    pred = tx.dot(w)
+    err = y - pred
+
+    return -tx.T.dot(err) / len(y)
+    
 
 
 def sigmoid(t: np.ndarray) -> np.ndarray:
