@@ -100,9 +100,10 @@ def compute_logistic_loss(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.fl
     Returns:
         The mean logistic loss as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
-
+    pred = tx.dot(w)
+    # Stable log(1 + exp(pred)): exp(-|pred|) lies in (0, 1], so it never overflows.
+    softplus = np.maximum(0, pred) + np.log1p(np.exp(-np.abs(pred)))
+    return np.mean(-y * pred + softplus)
 
 def compute_logistic_gradient(
     y: np.ndarray, tx: np.ndarray, w: np.ndarray
