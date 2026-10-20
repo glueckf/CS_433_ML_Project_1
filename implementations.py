@@ -225,8 +225,11 @@ def ridge_regression(
         A tuple ``(w, loss)`` with the optimal weights, shape ``(D,)``, and
         their unpenalised mean squared error as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    a = tx.T.dot(tx) + 2*len(y)*lambda_*np.eye(tx.shape[1])
+    b = tx.T.dot(y)
+    w = np.linalg.solve(a, b)
+    loss = compute_mse(y, tx, w)
+    return w, loss
 
 
 def logistic_regression(
@@ -251,8 +254,6 @@ def logistic_regression(
         A tuple ``(w, loss)`` with the final weights, shape ``(D,)``, and the
         logistic loss of those final weights as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
 
 
 def reg_logistic_regression(
@@ -284,5 +285,3 @@ def reg_logistic_regression(
         A tuple ``(w, loss)`` with the final weights, shape ``(D,)``, and the
         unpenalised logistic loss of those final weights as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
