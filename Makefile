@@ -39,7 +39,7 @@ grading-tests:  ## Run the official EPFL signature tests against this working tr
 		$(CURDIR)/$(BIN)/pytest --github_link $(CURDIR) .
 
 hash-data:  ## Regenerate data/MANIFEST.sha256 (repo owner only)
-	cd data && shasum -a 256 x_train.csv x_test.csv y_train.csv sample_submission.csv > MANIFEST.sha256
+	cd data && shasum -a 256 x_train.csv x_test.csv y_train.csv > MANIFEST.sha256
 
 check-data:  ## Verify your local dataset matches the committed manifest
 	cd data && shasum -a 256 -c MANIFEST.sha256

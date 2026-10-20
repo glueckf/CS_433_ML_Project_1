@@ -1,5 +1,7 @@
 # CS-433 Machine Learning — Project 1
 
+![Deadline](https://img.shields.io/date/1793286000?label=deadline&color=orange)
+
 Predicting the risk of coronary heart disease (MICHD) from the
 [BRFSS 2015](https://www.cdc.gov/brfss/annual_data/annual_2015.html) health
 survey, using only NumPy and the Python standard library.
@@ -46,4 +48,4 @@ process, and the handful of project rules that CI enforces.
 
 ## Team
 
-Finn Glück · <!-- teammate --> · <!-- teammate -->
+Finn Glück ([@glueckf](https://github.com/glueckf)) · Matthieu Schmid ([@MatthieuWillySch](https://github.com/MatthieuWillySch)) · Ruimin ([@ruimin890](https://github.com/ruimin890))
