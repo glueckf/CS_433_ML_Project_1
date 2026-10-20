@@ -144,8 +144,13 @@ def mean_squared_error_gd(
         A tuple ``(w, loss)`` with the final weights, shape ``(D,)``, and the
         mean squared error of those final weights as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    w = initial_w.copy()
+    for _ in range(max_iters):
+        gradient = compute_mse_gradient(y, tx, w)
+        w = w - gamma * gradient
+
+    loss = compute_mse(y, tx, w)
+    return w, loss
 
 
 def mean_squared_error_sgd(
@@ -172,9 +177,8 @@ def mean_squared_error_sgd(
         A tuple ``(w, loss)`` with the final weights, shape ``(D,)``, and the
         mean squared error of those final weights as a NumPy scalar.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
-
+    
+    
 
 def least_squares(y: np.ndarray, tx: np.ndarray) -> tuple[np.ndarray, np.floating]:
     """Least squares regression using the normal equations.
