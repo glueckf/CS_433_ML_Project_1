@@ -182,9 +182,7 @@ def mean_squared_error_sgd(
         n = np.random.randint(len(y))
         # Slice: n:n+1 (not n) so tx stays 2-D, shape (1, D)
         gradient = compute_mse_gradient(y[n:n+1], tx[n:n+1], w)
-        # Update weigths
         w = w - gamma * gradient
-    # Compute final loss
     loss = compute_mse(y, tx, w)
     return w, loss
 
