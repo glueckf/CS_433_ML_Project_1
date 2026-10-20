@@ -1,7 +1,7 @@
 # How we work in this repo
 
 Everything here exists for one reason: three people should be able to work in
-parallel for five weeks and still have a repository that merges cleanly and
+parallel until the deadline and still have a repository that merges cleanly and
 reproduces its own results on the last day.
 
 You do not need to understand all of it up front. Read "Setup" and "The loop",
@@ -11,7 +11,9 @@ then come back to the rest when something blocks you.
 
 ## Setup (once)
 
-You need Python 3.11 and `git`.
+You need Python 3.11 and `git`. Check with `python3.11 --version`; if the
+command is missing, install it with `brew install python@3.11` on macOS or
+`sudo apt install python3.11 python3.11-venv` on Ubuntu.
 
 ```bash
 git clone https://github.com/glueckf/CS_433_ML_Project_1.git
@@ -173,5 +175,4 @@ For reference, `main` is protected with: pull request required, one approving
 review, review dismissed on new pushes, code owner review required, CI checks
 required to pass, linear history, no force pushes.
 
-`.github/CODEOWNERS` controls who is asked to review what. It gets updated as
-the team joins.
+`.github/CODEOWNERS` controls who is asked to review what.
