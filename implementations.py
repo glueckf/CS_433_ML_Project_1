@@ -291,3 +291,11 @@ def reg_logistic_regression(
         A tuple ``(w, loss)`` with the final weights, shape ``(D,)``, and the
         unpenalised logistic loss of those final weights as a NumPy scalar.
     """
+    w = initial_w.copy()
+    for _ in range(max_iters):
+        penalty_grad = 2 * lambda_ * w
+        gradient = compute_logistic_gradient(y, tx, w) + penalty_grad 
+        w = w - gamma * gradient
+
+    loss = compute_logistic_loss(y, tx, w)
+    return w, loss
