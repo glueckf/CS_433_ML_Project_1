@@ -19,8 +19,7 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     Returns:
         Accuracy in ``[0, 1]``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    return float(np.mean(y_true == y_pred))
 
 
 def confusion_counts(
@@ -36,8 +35,14 @@ def confusion_counts(
     Returns:
         A tuple ``(tp, fp, tn, fn)``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    true_positive = y_true == positive_label
+    predicted_positive = y_pred == positive_label
+
+    tp = int(np.sum(true_positive & predicted_positive))
+    fp = int(np.sum(~true_positive & predicted_positive))
+    tn = int(np.sum(~true_positive & ~predicted_positive))
+    fn = int(np.sum(true_positive & ~predicted_positive))
+    return tp, fp, tn, fn
 
 
 def precision_recall_f1(
@@ -56,8 +61,16 @@ def precision_recall_f1(
     Returns:
         A tuple ``(precision, recall, f1)``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    tp, fp, tn, fn = confusion_counts(y_true, y_pred, positive_label)
+
+    precision_denominator = tp + fp
+    recall_denominator = tp + fn
+    precision = tp / precision_denominator if precision_denominator else 0.0
+    recall = tp / recall_denominator if recall_denominator else 0.0
+
+    f1_denominator = precision + recall
+    f1 = 2 * precision * recall / f1_denominator if f1_denominator else 0.0
+    return float(precision), float(recall), float(f1)
 
 
 def best_threshold(
@@ -73,5 +86,22 @@ def best_threshold(
     Returns:
         A tuple ``(threshold, f1)`` for the best threshold found.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    y_true = np.asarray(y_true)
+    scores = np.asarray(scores)
+    if y_true.shape != scores.shape:
+        raise ValueError("y_true and scores must have the same shape.")
+    if scores.ndim != 1 or scores.size == 0:
+        raise ValueError("scores must be a non-empty one-dimensional array.")
+
+    negative_label = -positive_label
+    best_score = -1.0
+    best_value = float(scores[0])
+
+    for threshold in np.unique(scores):
+        predictions = np.where(scores >= threshold, positive_label, negative_label)
+        _, _, f1 = precision_recall_f1(y_true, predictions, positive_label)
+        if f1 > best_score:
+            best_score = f1
+            best_value = float(threshold)
+
+    return best_value, float(best_score)
