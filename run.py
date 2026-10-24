@@ -21,8 +21,9 @@ from implementations import least_squares
 from mlproject.config import DATA_DIR, RANDOM_SEED
 from mlproject.preprocessing import (
     evaluate_baseline,
-    preprocess_data,
+    fit_preprocessor,
     stratified_split,
+    transform_preprocessor,
 )
 
 
@@ -59,35 +60,57 @@ def main() -> None:
         seed=RANDOM_SEED,
     )
 
-    # 3. Preprocess training and validation data. #ratio will be optimize
-    # Preprocessing configuration
+    # ==================================================
+    # DEVELOPMENT PHASE: PREPROCESSING
+    # ==================================================
+    # Fit preprocessing rules on x_tr only.
+    # Apply the same rules to x_val to avoid data leakage.
+    #
+    # The best preprocessing parameters, model
+    # hyperparameters and classification threshold
+    # will be selected using validation performance.
+
     use_one_hot = True
     use_bias = True
     use_special_codes = True
-    use_augmented_input = False  # does not work well for Leastsquare for the moment
+    use_augmented_input = False
 
-    x_tr_processed, x_val_processed = preprocess_data(
+    preprocessing_options = {
+        "csv_path": str(DATA_DIR / "x_train.csv"),
+        "threshold": 0.80,  # To be optimized
+        "use_one_hot": use_one_hot,
+        "use_bias": use_bias,
+        "use_special_codes": use_special_codes,
+        "use_augmented_input": use_augmented_input,
+    }
+
+    print("\n===== START PREPROCESSING (VALIDATION) =====")
+
+    x_tr_processed, preprocessing_state = fit_preprocessor(
         x_tr,
-        x_val,
-        csv_path=str(DATA_DIR / "x_train.csv"),
-        threshold=0.80,  # will be optimize later when all model are setup
-        use_one_hot=use_one_hot,
-        use_bias=use_bias,
-        use_special_codes=use_special_codes,
-        use_augmented_input=use_augmented_input,
+        **preprocessing_options,
     )
+
+    x_val_processed = transform_preprocessor(
+        x_val,
+        preprocessing_state,
+    )
+
     print("Preprocessing completed.")
-    # print("Training shape:", x_tr_processed.shape)
-    # print("Validation shape:", x_val_processed.shape)
+    print("Training shape:", x_tr_processed.shape)
+    print("Validation shape:", x_val_processed.shape)
+    print("===== END PREPROCESSING =====\n")
 
-    print("===== END PREPROCESS =====\n")
-
-    # for testing preprocess you can modify/change/delete it
+    # for test
     w, train_loss = least_squares(y_tr, x_tr_processed)
-    # print(f"Training loss: {train_loss:.6f}")
     scores = x_val_processed @ w
-    classification_threshold = -0.6  # to test for preprocess
-    metrics = evaluate_baseline(y_val, scores, threshold=classification_threshold)
+    classification_threshold = -0.6  # To be optimized
+    metrics = evaluate_baseline(
+        y_val,
+        scores,
+        threshold=classification_threshold,
+    )
+
     print("\n===== RESULTS (test for preprocess) =====")
     print(f"Threshold: {classification_threshold:.4f}")
     print(f"Accuracy:  {metrics['accuracy']:.4f}")

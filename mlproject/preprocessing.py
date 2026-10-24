@@ -405,6 +405,113 @@ def evaluate_baseline(y_true, predictions, threshold=0):
     }
 
 
+def fit_preprocessor(
+    x_train,
+    csv_path,
+    threshold=0.97,
+    use_one_hot=False,
+    use_bias=True,
+    use_special_codes=True,
+    use_augmented_input=False,
+):
+    """Fit preprocessing on training data and return transformed data and state."""
+    feature_names = load_feature_names(csv_path)
+    x = np.asarray(x_train, dtype=float).copy()
+
+    if x.shape[1] != len(feature_names):
+        raise ValueError("Feature names do not match x_train.")
+
+    # 1. Replace documented special codes.
+    if use_special_codes:
+        x = replace_special_codes(x, feature_names)
+
+    # 2. Remove columns with too many missing values.
+    x, missing_mask = drop_high_missingness_columns(x, threshold)
+    feature_names = [
+        name for name, keep in zip(feature_names, missing_mask, strict=True) if keep
+    ]
+
+    # 3. Learn imputation values from training data.
+    x, fill_values = impute_missing(x)
+
+    # 4. Remove constant columns.
+    x, constant_mask = drop_constant_columns(x)
+    feature_names = [
+        name for name, keep in zip(feature_names, constant_mask, strict=True) if keep
+    ]
+
+    # 5. Remove duplicate columns using training data only.
+    x, _, duplicate_mask = drop_duplicate_columns(x, x)
+    feature_names = [
+        name for name, keep in zip(feature_names, duplicate_mask, strict=True) if keep
+    ]
+
+    # 6. Learn categorical values from training data.
+    categorical_set = set(CATEGORICAL_FEATURES)
+    categories_by_feature = {}
+
+    if use_one_hot:
+        for j, name in enumerate(feature_names):
+            if name in categorical_set:
+                categories_by_feature[name] = np.unique(x[:, j])
+
+    # 7. Augment quantitative features if requested.
+    if use_augmented_input:
+        x, _, feature_names = augment_inputs_train_val(x, x, feature_names)
+
+    # 8. Apply one-hot encoding using the learned categories.
+    if use_one_hot:
+        x, feature_names = _encode_with_categories(
+            x, feature_names, categories_by_feature
+        )
+
+    # 9. Learn scaling statistics from training data.
+    x, mean, std = standardize(x)
+
+    # 10. Add the bias column last.
+    if use_bias:
+        x = add_bias_column(x)
+
+    state = {
+        "feature_names": load_feature_names(csv_path),
+        "missing_mask": missing_mask,
+        "constant_mask": constant_mask,
+        "duplicate_mask": duplicate_mask,
+        "fill_values": fill_values,
+        "categories_by_feature": categories_by_feature,
+        "use_one_hot": use_one_hot,
+        "use_bias": use_bias,
+        "use_special_codes": use_special_codes,
+        "use_augmented_input": use_augmented_input,
+        "mean": mean,
+        "std": std,
+    }
+
+    return x, state
+
+
+def _encode_with_categories(x, feature_names, categories_by_feature):
+    """Encode categorical features using categories learned on training data."""
+    categorical_set = set(categories_by_feature)
+    numerical_indices = [
+        i for i, name in enumerate(feature_names) if name not in categorical_set
+    ]
+
+    parts = [x[:, numerical_indices]]
+    encoded_names = [feature_names[i] for i in numerical_indices]
+
+    for name, categories in categories_by_feature.items():
+        idx = feature_names.index(name)
+        encoded_categories = categories[1:]
+
+        encoded = (x[:, idx, None] == encoded_categories[None, :]).astype(float)
+
+        parts.append(encoded)
+        encoded_names.extend(f"{name}_{category:g}" for category in encoded_categories)
+
+    return np.concatenate(parts, axis=1), encoded_names
+
+
 def augment_inputs_train_val(
     x_train,
     x_val,
@@ -485,112 +592,61 @@ def augment_inputs_train_val(
     )
 
 
-def preprocess_data(
-    x_train,
-    x_val,
-    csv_path,
-    threshold=0.97,
-    use_one_hot=False,
-    use_bias=True,
-    use_special_codes=True,
-    use_augmented_input=False,
-):
-    """Preprocess training and validation data."""
-    print("===== PREPROCESSING =====")
+def transform_preprocessor(x, state):
+    """Transform validation/test data using fitted training parameters."""
+    feature_names = state["feature_names"]
+    x = np.asarray(x, dtype=float).copy()
 
-    # 1. Load feature names.
-    feature_names = load_feature_names(csv_path)
+    if x.shape[1] != len(feature_names):
+        raise ValueError("Feature names do not match input data.")
 
-    if len(feature_names) != x_train.shape[1]:
-        raise ValueError(
-            f"Feature mismatch: {len(feature_names)} names "
-            f"for {x_train.shape[1]} columns."
-        )
+    # 1. Apply the same special-code rules.
+    if state["use_special_codes"]:
+        x = replace_special_codes(x, feature_names)
 
-    if x_train.shape[1] != x_val.shape[1]:
-        raise ValueError("Training and validation have different feature counts.")
+    # 2. Apply the same column-selection masks.
+    x = x[:, state["missing_mask"]]
 
-    # 2. Replace documented special codes with NaN.
-    if use_special_codes:
-        x_train = replace_special_codes(x_train, feature_names)
-        x_val = replace_special_codes(x_val, feature_names)
-        print("Special codes replaced.")
-    else:
-        print("Special code replacement skipped.")
+    # 3. Impute using training-set values.
+    x, _ = impute_missing(x, state["fill_values"])
 
-    # 3. Remove columns with too many missing values.
-    x_train, keep_mask = drop_high_missingness_columns(
-        x_train,
-        max_missing_fraction=threshold,
-    )
-    x_val = x_val[:, keep_mask]
+    # 4. Remove the same constant and duplicate columns.
+    x = x[:, state["constant_mask"]]
+    x = x[:, state["duplicate_mask"]]
 
+    # Reconstruct the feature names after column selection.
     feature_names = [
-        name for name, keep in zip(feature_names, keep_mask, strict=True) if keep
+        name
+        for name, keep in zip(feature_names, state["missing_mask"], strict=True)
+        if keep
+    ]
+    feature_names = [
+        name
+        for name, keep in zip(feature_names, state["constant_mask"], strict=True)
+        if keep
+    ]
+    feature_names = [
+        name
+        for name, keep in zip(feature_names, state["duplicate_mask"], strict=True)
+        if keep
     ]
 
-    # 4. Impute missing values using training statistics only.
-    x_train, fill_values = impute_missing(x_train)
-    x_val, _ = impute_missing(x_val, fill_values)
+    # 5. Apply the same feature augmentation.
+    if state["use_augmented_input"]:
+        x, _, feature_names = augment_inputs_train_val(x, x, feature_names)
 
-    # 5. Remove constant columns.
-    x_train, keep_mask = drop_constant_columns(x_train)
-    x_val = x_val[:, keep_mask]
+    # 6. Apply the categories learned from training data.
+    if state["use_one_hot"]:
+        x, _ = _encode_with_categories(x, feature_names, state["categories_by_feature"])
 
-    feature_names = [
-        name for name, keep in zip(feature_names, keep_mask, strict=True) if keep
-    ]
+    # 7. Reuse training means and standard deviations.
+    x, _, _ = standardize(x, mean=state["mean"], std=state["std"])
 
-    # 6. Remove duplicate columns.
-    x_train, x_val, duplicate_mask = drop_duplicate_columns(x_train, x_val)
+    # 8. Add the bias column if requested.
+    if state["use_bias"]:
+        x = add_bias_column(x)
 
-    feature_names = [
-        name for name, keep in zip(feature_names, duplicate_mask, strict=True) if keep
-    ]
+    if not np.all(np.isfinite(x)):
+        raise ValueError("Processed data contains NaN or infinite values.")
 
-    # 7. Augment input features with squared terms.
-    if use_augmented_input:
-        x_train, x_val, feature_names = augment_inputs_train_val(
-            x_train,
-            x_val,
-            feature_names,
-        )
-        print("Augmented inputs applied.")
-    else:
-        print("Augmented inputs skipped.")
-
-    # 8. Apply One-Hot Encoding.
-    if use_one_hot:
-        x_train, x_val, feature_names = one_hot_encode_train_val(
-            x_train,
-            x_val,
-            feature_names,
-        )
-        print("One-Hot Encoding applied.")
-    else:
-        print("One-Hot Encoding skipped.")
-
-    # 9. Standardize using training statistics only.
-    x_train, mean, std = standardize(x_train)
-    x_val, _, _ = standardize(x_val, mean=mean, std=std)
-    print("Data standardized.")
-
-    # 10. Add bias column.
-    if use_bias:
-        x_train = add_bias_column(x_train)
-        x_val = add_bias_column(x_val)
-        print("Bias column added.")
-    else:
-        print("Bias column skipped.")
-
-    # 10. Check the output.
-    if not np.all(np.isfinite(x_train)):
-        raise ValueError("x_train contains NaN or infinite values.")
-
-    if not np.all(np.isfinite(x_val)):
-        raise ValueError("x_val contains NaN or infinite values.")
-
-    # print("Final training shape:", x_train.shape)
-    # print("Final validation shape:", x_val.shape)
-
-    return x_train, x_val
+    return x
