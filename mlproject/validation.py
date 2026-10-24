@@ -7,10 +7,12 @@ here, and the leaderboard is only ever a sanity check.
 """
 
 from collections.abc import Callable
+from itertools import product
 
 import numpy as np
 
 from mlproject.config import N_FOLDS, RANDOM_SEED
+from mlproject.metrics import accuracy, precision_recall_f1
 
 
 def build_k_fold_indices(
@@ -27,8 +29,16 @@ def build_k_fold_indices(
     Returns:
         An integer array of shape ``(k, n_samples // k)``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    if n_samples <= 0:
+        raise ValueError("n_samples must be positive.")
+    if k <= 1 or k > n_samples:
+        raise ValueError("k must be greater than 1 and at most n_samples.")
+    if n_samples % k:
+        raise ValueError("n_samples must be divisible by k.")
+
+    indices = np.arange(n_samples)
+    np.random.default_rng(seed).shuffle(indices)
+    return indices.reshape(k, n_samples // k)
 
 
 def cross_validate(
@@ -56,8 +66,40 @@ def cross_validate(
     Returns:
         A dict of metric name to mean value across folds.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    x = np.asarray(x)
+    y = np.asarray(y)
+    if x.ndim != 2 or y.ndim != 1:
+        raise ValueError("x must be 2-D and y must be 1-D.")
+    if x.shape[0] != y.shape[0]:
+        raise ValueError("x and y must contain the same number of rows.")
+
+    folds = build_k_fold_indices(x.shape[0], k=k, seed=seed)
+    fold_metrics: list[dict[str, float]] = []
+
+    for validation_indices in folds:
+        training_mask = np.ones(x.shape[0], dtype=bool)
+        training_mask[validation_indices] = False
+
+        predictions = np.asarray(
+            fit_predict(x[training_mask], y[training_mask], x[validation_indices])
+        )
+        if predictions.shape != y[validation_indices].shape:
+            raise ValueError("fit_predict returned predictions with the wrong shape.")
+
+        precision, recall, f1 = precision_recall_f1(y[validation_indices], predictions)
+        fold_metrics.append(
+            {
+                "accuracy": accuracy(y[validation_indices], predictions),
+                "precision": precision,
+                "recall": recall,
+                "f1": f1,
+            }
+        )
+
+    return {
+        metric: float(np.mean([fold[metric] for fold in fold_metrics]))
+        for metric in fold_metrics[0]
+    }
 
 
 def grid_search(
@@ -80,5 +122,19 @@ def grid_search(
     Returns:
         A tuple ``(best_params, best_metrics)``.
     """
-    # *** YOUR CODE HERE ***
-    raise NotImplementedError
+    if not param_grid or any(not values for values in param_grid.values()):
+        raise ValueError("param_grid must contain at least one value per parameter.")
+
+    parameter_names = list(param_grid)
+    best_params: dict = {}
+    best_metrics: dict[str, float] | None = None
+
+    for values in product(*(param_grid[name] for name in parameter_names)):
+        params = dict(zip(parameter_names, values, strict=True))
+        metrics = cross_validate(x, y, build_model(**params), k=k)
+        if best_metrics is None or metrics["f1"] > best_metrics["f1"]:
+            best_params = params
+            best_metrics = metrics
+
+    assert best_metrics is not None
+    return best_params, best_metrics
