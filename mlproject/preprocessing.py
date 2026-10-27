@@ -381,30 +381,6 @@ def drop_duplicate_columns(
     return x_train, x_val, keep_mask
 
 
-# for TEST must be delete
-def evaluate_baseline(y_true, predictions, threshold=0):
-    """Print basic classification metrics using threshold zero."""
-    y_pred = np.where(predictions >= threshold, 1, -1)
-
-    accuracy = np.mean(y_pred == y_true)
-
-    tp = np.sum((y_true == 1) & (y_pred == 1))
-    fp = np.sum((y_true == -1) & (y_pred == 1))
-    fn = np.sum((y_true == 1) & (y_pred == -1))
-
-    precision = tp / (tp + fp) if tp + fp > 0 else 0.0
-    recall = tp / (tp + fn) if tp + fn > 0 else 0.0
-    f1 = (
-        2 * precision * recall / (precision + recall) if precision + recall > 0 else 0.0
-    )
-    return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-    }
-
-
 def fit_preprocessor(
     x_train,
     csv_path,

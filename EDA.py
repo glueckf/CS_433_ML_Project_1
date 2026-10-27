@@ -9,9 +9,8 @@ import numpy as np
 
 from helpers import load_csv_data
 from mlproject.config import DATA_DIR, FIGURES_DIR
+from mlproject.plots import plot_missingness, save_figure
 
-# Candidate codes to inspect in the codebook. These are NOT automatically
-# treated as missing values: their meaning depends on the feature.
 CANDIDATE_SPECIAL_CODES = [
     7,
     9,
@@ -189,6 +188,10 @@ def main():
     # 3. Analyze missing values
     nan_mask = np.isnan(x_train)
     nan_ratio = np.mean(nan_mask, axis=0)
+
+    # Plot the distribution of missing values
+    fig = plot_missingness(x_train, feature_names)
+    save_figure(fig, "missing_values_distribution")
 
     print("\n===== MISSING VALUES =====")
     print("Total missing values:", int(np.sum(nan_mask)))

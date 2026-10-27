@@ -80,7 +80,7 @@ def main() -> None:
 
     preprocessing_options = {
         "csv_path": str(DATA_DIR / "x_train.csv"),
-        "threshold": 0.80,  # To be optimized
+        "threshold": 0.80,
         "use_one_hot": use_one_hot,
         "use_bias": use_bias,
         "use_special_codes": use_special_codes,
