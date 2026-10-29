@@ -37,9 +37,10 @@ Tested with Python 3.11 (NumPy 2.3) and Python 3.9 (NumPy 1.23).
    is seeded (`RANDOM_SEED = 42` in `mlproject/config.py`), so repeated runs
    produce a byte-identical file.
 
-`python compare_methods.py` reproduces the comparison of all six methods from
-the report, and `python EDA.py` regenerates the exploratory statistics and the
-missing-value figure in `reports/`.
+`python compare_methods.py` reproduces the comparison of all six methods and the
+ablation study from the report, and `python EDA.py`
+regenerates the exploratory statistics and the missing-value figure in
+`reports/`.
 
 ## Pipeline
 
@@ -61,7 +62,7 @@ the validation and test data.
 | ------------------------------------- | ----------------------------------------------------------- |
 | `implementations.py`                  | The six required methods                                    |
 | `run.py`                              | Reproduces the final submission                             |
-| `compare_methods.py`                  | Reproduces the method comparison table                      |
+| `compare_methods.py`                  | Reproduces the method comparison table and ablation study   |
 | `EDA.py`                              | Exploratory data analysis and report figure                 |
 | `mlproject/preprocessing.py`          | Cleaning, imputation, encoding, standardization             |
 | `mlproject/special_code_brfss2015.py` | Per-feature special codes from the BRFSS codebook           |
