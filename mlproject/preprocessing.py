@@ -6,6 +6,8 @@ sentinel codes (7 and 9 commonly mean "don't know" and "refused", 77/99 and
 the single most common way to get a bad score on this dataset.
 """
 
+from __future__ import annotations
+
 import csv
 
 import numpy as np
@@ -15,158 +17,6 @@ from mlproject.special_code_brfss2015 import (
     QUANTITATIVE_FEATURES,
     replace_special_codes,
 )
-
-
-def one_hot_encode_train_val(
-    x_train,
-    x_val,
-    feature_names,
-    categorical_features=CATEGORICAL_FEATURES,
-):
-    """Apply One-Hot Encoding to selected categorical features.
-
-    Categories are learned from the training set only.
-    The same encoded columns are then used for the validation set.
-    Categories that appear only in the validation set are ignored.
-
-    Parameters
-    ----------
-    x_train : ndarray, shape (n_train, n_features)
-        Training feature matrix.
-    x_val : ndarray, shape (n_val, n_features)
-        Validation feature matrix.
-    feature_names : list of str
-        Names of the columns in x_train and x_val.
-    categorical_features : list of str
-        Names of the features to encode.
-
-    Returns:
-    -------
-    x_train_encoded : ndarray
-        Encoded training feature matrix.
-    x_val_encoded : ndarray
-        Encoded validation feature matrix.
-    encoded_feature_names : list of str
-        Names of the resulting features.
-    """
-    feature_names = list(feature_names)
-    categorical_set = set(categorical_features)
-
-    # Check that the number of feature names matches the matrix dimensions.
-    if x_train.shape[1] != len(feature_names):
-        raise ValueError("The number of feature names does not match x_train.")
-
-    if x_val.shape[1] != len(feature_names):
-        raise ValueError("The number of feature names does not match x_val.")
-
-    # Identify categorical features present in the matrices.
-    categorical_indices = [
-        i for i, name in enumerate(feature_names) if name in categorical_set
-    ]
-
-    # missing_features = categorical_set - set(feature_names)
-
-    # if missing_features:
-    # print("Categorical features not found:",
-    # sorted(missing_features),)
-
-    # Keep all non-categorical features unchanged.
-    numerical_indices = [
-        i for i, name in enumerate(feature_names) if name not in categorical_set
-    ]
-
-    train_parts = []
-    val_parts = []
-    encoded_feature_names = []
-
-    if numerical_indices:
-        train_parts.append(x_train[:, numerical_indices])
-        val_parts.append(x_val[:, numerical_indices])
-
-        encoded_feature_names.extend(feature_names[i] for i in numerical_indices)
-
-    # Learn categories from the training set only.
-    for idx in categorical_indices:
-        feature_name = feature_names[idx]
-
-        train_col = x_train[:, idx]
-        val_col = x_val[:, idx]
-
-        # Missing values must be handled before encoding.
-        if np.isnan(train_col).any() or np.isnan(val_col).any():
-            raise ValueError(
-                f"Feature '{feature_name}' still contains NaN values. "
-                "Impute missing values before One-Hot Encoding."
-            )
-
-        categories = np.unique(train_col)
-
-        # Create one binary column for each category found in training.
-        # Keep the first category as the reference category.
-        # Create binary columns for all remaining categories.
-        encoded_categories = categories[1:]
-
-        train_encoded = (train_col[:, None] == encoded_categories[None, :]).astype(
-            float
-        )
-
-        val_encoded = (val_col[:, None] == encoded_categories[None, :]).astype(float)
-
-        train_parts.append(train_encoded)
-        val_parts.append(val_encoded)
-
-        encoded_feature_names.extend(
-            f"{feature_name}_{category:g}" for category in encoded_categories
-        )
-
-    x_train_encoded = np.concatenate(train_parts, axis=1)
-    x_val_encoded = np.concatenate(val_parts, axis=1)
-
-    return (
-        x_train_encoded,
-        x_val_encoded,
-        encoded_feature_names,
-    )
-
-
-def detect_special_code_candidates(x, feature_names, max_unique_values=20):
-    """Detect potential special missing codes in features.
-
-    Features with 20 or more unique values are ignored.
-    For other features, report possible special codes.
-    No values are replaced.
-    """
-    candidates = {}
-
-    possible_codes = {7, 9, 77, 99, 98, 88, 777, 999, 888, 7777, 9999, 8888, 99999}
-
-    for j, name in enumerate(feature_names):
-        col = x[:, j]
-        col = col[~np.isnan(col)]
-
-        if len(col) == 0:
-            continue
-
-        unique_values, counts = np.unique(col, return_counts=True)
-
-        # Ignore features with at least 20 distinct values
-        if len(unique_values) >= max_unique_values:
-            continue
-
-        values = set(unique_values.tolist())
-        observed_candidates = values.intersection(possible_codes)
-
-        if observed_candidates:
-            candidates[name] = {
-                "unique_values": sorted(values),
-                "possible_codes": sorted(observed_candidates),
-                "counts": {
-                    value.item() if isinstance(value, np.generic) else value: int(count)
-                    for value, count in zip(unique_values, counts, strict=True)
-                },
-            }
-
-    return candidates
 
 
 def load_feature_names(csv_path):
@@ -189,7 +39,6 @@ def drop_constant_columns(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         A tuple ``(x_reduced, keep_mask)`` where ``keep_mask`` has shape
         ``(D,)`` and must be reused verbatim on the test set.
     """
-    # *** YOUR CODE HERE ***
     n_features = x.shape[1]
     keep_mask = np.ones(n_features, dtype=bool)
 
@@ -216,20 +65,12 @@ def drop_high_missingness_columns(
         A tuple ``(x_reduced, keep_mask)``. Reuse ``keep_mask`` on the test
         set rather than recomputing it there.
     """
-    # *** YOUR CODE HERE ***
     if not 0.0 <= max_missing_fraction <= 1.0:
         raise ValueError("max_missing_fraction must be between 0 and 1.")
 
     missing_fraction = np.mean(np.isnan(x), axis=0)
 
-    # print("Missing fraction percentiles:")
-    # print(np.percentile(missing_fraction, [0, 25, 50, 75, 90, 95, 100]))
-
     keep_mask = missing_fraction <= max_missing_fraction
-
-    # print(f"Threshold: {max_missing_fraction:.0%} |
-    #  "f"Kept: {np.sum(keep_mask)}
-    # / {x.shape[1]} | "f"Removed: {np.sum(~keep_mask)}")
 
     return x[:, keep_mask], keep_mask
 
@@ -251,7 +92,6 @@ def impute_missing(
     Returns:
         A tuple ``(x_filled, fill_values)``.
     """
-    # *** YOUR CODE HERE ***
     x_filled = x.copy()
 
     if fill_values is None:
@@ -299,7 +139,6 @@ def standardize(
     Returns:
         A tuple ``(x_standardized, mean, std)``.
     """
-    # *** YOUR CODE HERE ***
     mean = np.mean(x, axis=0) if mean is None else np.asarray(mean, dtype=float)
 
     std = np.std(x, axis=0) if std is None else np.asarray(std, dtype=float)
@@ -324,7 +163,6 @@ def add_bias_column(x: np.ndarray) -> np.ndarray:
     Returns:
         Feature matrix of shape ``(N, D + 1)``.
     """
-    # *** YOUR CODE HERE ***
     ones = np.ones((x.shape[0], 1), dtype=x.dtype)
     return np.concatenate((ones, x), axis=1)
 
@@ -403,24 +241,18 @@ def fit_preprocessor(
 
     # 2. Remove columns with too many missing values.
     x, missing_mask = drop_high_missingness_columns(x, threshold)
-    feature_names = [
-        name for name, keep in zip(feature_names, missing_mask, strict=True) if keep
-    ]
+    feature_names = [name for name, keep in zip(feature_names, missing_mask) if keep]
 
     # 3. Learn imputation values from training data.
     x, fill_values = impute_missing(x)
 
     # 4. Remove constant columns.
     x, constant_mask = drop_constant_columns(x)
-    feature_names = [
-        name for name, keep in zip(feature_names, constant_mask, strict=True) if keep
-    ]
+    feature_names = [name for name, keep in zip(feature_names, constant_mask) if keep]
 
     # 5. Remove duplicate columns using training data only.
     x, _, duplicate_mask = drop_duplicate_columns(x, x)
-    feature_names = [
-        name for name, keep in zip(feature_names, duplicate_mask, strict=True) if keep
-    ]
+    feature_names = [name for name, keep in zip(feature_names, duplicate_mask) if keep]
 
     # 6. Learn categorical values from training data.
     categorical_set = set(CATEGORICAL_FEATURES)
@@ -592,19 +424,13 @@ def transform_preprocessor(x, state):
 
     # Reconstruct the feature names after column selection.
     feature_names = [
-        name
-        for name, keep in zip(feature_names, state["missing_mask"], strict=True)
-        if keep
+        name for name, keep in zip(feature_names, state["missing_mask"]) if keep
     ]
     feature_names = [
-        name
-        for name, keep in zip(feature_names, state["constant_mask"], strict=True)
-        if keep
+        name for name, keep in zip(feature_names, state["constant_mask"]) if keep
     ]
     feature_names = [
-        name
-        for name, keep in zip(feature_names, state["duplicate_mask"], strict=True)
-        if keep
+        name for name, keep in zip(feature_names, state["duplicate_mask"]) if keep
     ]
 
     # 5. Apply the same feature augmentation.

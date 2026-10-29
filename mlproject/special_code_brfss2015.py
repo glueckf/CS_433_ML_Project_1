@@ -313,14 +313,6 @@ QUANTITATIVE_FEATURES = [
 ]
 
 
-def get_special_codes(feature_names):
-    """Return a copy of the special-code map restricted to given feature names."""
-    names = {str(name).strip() for name in feature_names}
-    return {
-        name: sorted(SPECIAL_CODES[name]) for name in SPECIAL_CODES if name in names
-    }
-
-
 def replace_special_codes(x, feature_names):
     """Replace documented special codes with NaN and handle valid zero codes."""
     out = np.array(x, dtype=float, copy=True)

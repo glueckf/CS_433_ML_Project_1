@@ -18,7 +18,12 @@ import numpy as np
 
 from helpers import create_csv_submission, load_csv_data
 from implementations import ridge_regression
-from mlproject.config import DATA_DIR, RANDOM_SEED, SUBMISSIONS_DIR
+from mlproject.config import (
+    DATA_DIR,
+    RANDOM_SEED,
+    SUBMISSIONS_DIR,
+    VALIDATION_FRACTION,
+)
 from mlproject.metrics import accuracy, best_threshold, precision_recall_f1
 from mlproject.preprocessing import (
     fit_preprocessor,
@@ -31,23 +36,6 @@ def main() -> None:
     """Train the final model and write the submission csv."""
     np.random.seed(RANDOM_SEED)
 
-    # 1. Load the raw data.                  -> mlproject.data
-    # 2. Clean and impute.                   -> mlproject.preprocessing
-    # 3. Build features.                     -> mlproject.features
-    # 4. Fit the final model on all of it.   -> implementations
-    # 5. Predict, threshold, map to {-1, 1}. -> mlproject.metrics, mlproject.data
-    # 6. Write the csv.                      -> helpers.create_csv_submission
-    #
-    # Keep this function a readable sequence of calls into mlproject. If a step
-    # here grows past a couple of lines, it belongs in a module instead.
-    #
-    # The last two lines, once steps 1 to 5 produce test_ids and y_pred, are:
-    #
-    #     output_path = SUBMISSIONS_DIR / "submission.csv"
-    #     create_csv_submission(test_ids, y_pred, str(output_path))
-    #
-    # *** YOUR CODE HERE ***
-
     # 1. Load the dataset.
     print("\n===== STEP 1/6: LOADING DATA =====")
     print("Reading the training data and the test data...")
@@ -58,7 +46,7 @@ def main() -> None:
     x_tr, y_tr, x_val, y_val = stratified_split(
         x_train,
         y_train,
-        validation_fraction=0.2,
+        validation_fraction=VALIDATION_FRACTION,
         seed=RANDOM_SEED,
     )
 

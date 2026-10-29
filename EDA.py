@@ -237,7 +237,7 @@ def main():
 
     print("\n===== CLASS DISTRIBUTION =====")
 
-    for label, count in zip(labels, counts, strict=True):
+    for label, count in zip(labels, counts):
         print(f"Label {label}: {count} ({count / len(y_train):.2%})")
 
     # 8. Create output directories

@@ -6,6 +6,8 @@ and a good way to overfit the public split. Everything gets decided locally
 here, and the leaderboard is only ever a sanity check.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from itertools import product
 
@@ -130,7 +132,7 @@ def grid_search(
     best_metrics: dict[str, float] | None = None
 
     for values in product(*(param_grid[name] for name in parameter_names)):
-        params = dict(zip(parameter_names, values, strict=True))
+        params = dict(zip(parameter_names, values))
         metrics = cross_validate(x, y, build_model(**params), k=k)
         if best_metrics is None or metrics["f1"] > best_metrics["f1"]:
             best_params = params

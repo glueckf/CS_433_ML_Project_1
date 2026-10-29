@@ -1,51 +1,87 @@
-# CS-433 Machine Learning — Project 1
+# CS-433 Machine Learning — Project 1: Predicting coronary heart disease
 
-![Deadline](https://img.shields.io/date/1793286000?label=deadline&color=orange)
-
-Predicting the risk of coronary heart disease (MICHD) from the
+Binary classification of coronary heart disease (MICHD) from the
 [BRFSS 2015](https://www.cdc.gov/brfss/annual_data/annual_2015.html) health
-survey, using only NumPy and the Python standard library.
+survey, implemented with NumPy and the Python standard library only.
 
-The repository holds the six required method implementations, the full data
-pipeline, and the code that reproduces our competition submission.
+**Final model:** ridge regression (λ = 1e-5) on 219 preprocessed features, with
+a decision threshold tuned for F1 on a stratified validation split.
 
-- Course: [CS-433 Machine Learning](https://www.epfl.ch/labs/mlo/machine-learning-cs-433/)
-- Competition: [EPFL ML Project 1 on AIcrowd](https://www.aicrowd.com/challenges/epfl-machine-learning-project-1)
-- Assignment: [project1_description.pdf](project1_description.pdf)
+|                                         | Accuracy | F1    |
+| --------------------------------------- | -------- | ----- |
+| Local validation (20% stratified split) | 0.856    | 0.422 |
+| AIcrowd test set                        | 0.858    | 0.425 |
 
-## Quick start
+## Reproducing the submission
 
-```bash
-make setup                    # create .venv, install dependencies, install git hooks
-source .venv/bin/activate
-make check                    # lint and tests, the same checks CI runs
-```
+Tested with Python 3.11 (NumPy 2.3) and Python 3.9 (NumPy 1.23).
 
-Download `x_train.csv`, `x_test.csv` and `y_train.csv` from AIcrowd into
-`data/` (keep the filenames as they are), then verify them:
+1. Download `x_train.csv`, `x_test.csv` and `y_train.csv` from the
+   [AIcrowd challenge](https://www.aicrowd.com/challenges/epfl-machine-learning-project-1)
+   into `data/`, keeping the filenames. The data is not part of this
+   repository.
+2. Install the dependencies and verify the data:
 
-```bash
-make check-data
-python run.py                 # regenerate the submission csv
-```
+   ```bash
+   make setup && source .venv/bin/activate
+   make check-data      # compares the files against data/MANIFEST.sha256
+   ```
 
-## Layout
+3. Run:
 
-| Path                | Contents                                                  |
-| ------------------- | --------------------------------------------------------- |
-| `implementations.py`| The six graded methods. Self-contained, NumPy only.        |
-| `run.py`            | Reproduces our best submission end to end.                 |
-| `mlproject/`        | Everything else: loading, preprocessing, features, metrics, cross-validation, plots. |
-| `scripts/`          | Entry points that produce artefacts, such as report figures. |
-| `notebooks/`        | Exploration, one folder per person.                        |
-| `tests/`            | Local tests, plus the checks that enforce the course rules. |
-| `helpers.py`        | Provided by the course, kept unmodified.                   |
+   ```bash
+   python run.py
+   ```
 
-## Contributing
+   This writes `submissions/submission.csv` in about 2 minutes. All randomness
+   is seeded (`RANDOM_SEED = 42` in `mlproject/config.py`), so repeated runs
+   produce a byte-identical file.
 
-Read [WORKFLOW.md](WORKFLOW.md) first. It covers setup, the branch and review
-process, and the handful of project rules that CI enforces.
+`python compare_methods.py` reproduces the comparison of all six methods from
+the report, and `python EDA.py` regenerates the exploratory statistics and the
+missing-value figure in `reports/`.
+
+## Pipeline
+
+1. Replace BRFSS special codes ("don't know", "refused", …) with missing
+   values, per feature, following the codebook
+   (`mlproject/special_code_brfss2015.py`).
+2. Drop features with more than 80% missing values, impute the rest with the
+   training median, and drop constant and duplicate features.
+3. One-hot encode categorical features, standardize, and add a bias column.
+4. Fit ridge regression, choose the decision threshold that maximizes F1 on
+   the validation split, refit on all training data, and predict the test set.
+
+All preprocessing statistics are fitted on training data only and reused for
+the validation and test data.
+
+## Repository layout
+
+| Path                                  | Contents                                                    |
+| ------------------------------------- | ----------------------------------------------------------- |
+| `implementations.py`                  | The six required methods                                    |
+| `run.py`                              | Reproduces the final submission                             |
+| `compare_methods.py`                  | Reproduces the method comparison table                      |
+| `EDA.py`                              | Exploratory data analysis and report figure                 |
+| `mlproject/preprocessing.py`          | Cleaning, imputation, encoding, standardization             |
+| `mlproject/special_code_brfss2015.py` | Per-feature special codes from the BRFSS codebook           |
+| `mlproject/metrics.py`                | Accuracy, precision, recall, F1, threshold search           |
+| `mlproject/validation.py`             | k-fold cross-validation and grid search                     |
+| `mlproject/plots.py`                  | Figure helpers (the only module that uses matplotlib)       |
+| `tests/`                              | Unit tests, including checks of the course rules            |
+| `helpers.py`                          | Provided by the course, unmodified                          |
+
+Run the tests with `make check`. [WORKFLOW.md](WORKFLOW.md) describes how we
+collaborated on this repository.
 
 ## Team
 
-Finn Glück ([@glueckf](https://github.com/glueckf)) · Matthieu Schmid ([@MatthieuWillySch](https://github.com/MatthieuWillySch)) · Ruimin ([@ruimin890](https://github.com/ruimin890))
+Finn Glück · Ruimin Zhang · Matthieu Willy Schmid
+
+## Use of AI tools
+
+The repository tooling (CI, linting, Makefile, contributor workflow) and the
+initial function stubs were set up with Claude Code, which was also used to
+review and test `implementations.py`, to write `tests/test_implementations.py`
+and `compare_methods.py`, and to draft this README and parts of the report. The
+six methods in `implementations.py` were implemented by hand by Finn Glück.

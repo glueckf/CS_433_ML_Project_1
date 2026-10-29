@@ -27,8 +27,3 @@ VALIDATION_FRACTION = 0.2
 
 # Number of folds for k-fold cross-validation.
 N_FOLDS = 5
-
-# The labels arrive as {-1, 1}. Logistic regression needs {0, 1}, and the
-# submission file must be written back as {-1, 1}.
-NEGATIVE_LABEL = -1
-POSITIVE_LABEL = 1
