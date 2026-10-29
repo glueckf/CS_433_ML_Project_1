@@ -71,8 +71,7 @@ the validation and test data.
 | `tests/`                              | Unit tests, including checks of the course rules            |
 | `helpers.py`                          | Provided by the course, unmodified                          |
 
-Run the tests with `make check`. [WORKFLOW.md](WORKFLOW.md) describes how we
-collaborated on this repository.
+Run the tests with `make check`.
 
 ## Team
 
@@ -80,8 +79,7 @@ Finn Glück · Ruimin Zhang · Matthieu Willy Schmid
 
 ## Use of AI tools
 
-The repository tooling (CI, linting, Makefile, contributor workflow) and the
-initial function stubs were set up with Claude Code, which was also used to
-review and test `implementations.py`, to write `tests/test_implementations.py`
-and `compare_methods.py`, and to draft this README and parts of the report. The
-six methods in `implementations.py` were implemented by hand by Finn Glück.
+We used Claude Code to set up the repository tooling (CI, linting, Makefile,
+contributor workflow). During development, we used Claude Code and GitHub
+Copilot to review some pull requests and spot inconsistencies, and later to
+clean up unused code and redundant comments. Claude Code also helped write the unit tests and the method-comparison script. All implementations were written by the team.
