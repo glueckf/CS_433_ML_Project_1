@@ -9,7 +9,11 @@ import numpy as np
 
 from helpers import load_csv_data
 from mlproject.config import DATA_DIR, FIGURES_DIR
-from mlproject.plots import plot_missingness, save_figure
+from mlproject.plots import (
+    plot_missingness,
+    plot_missingness_with_cutoff,
+    save_figure,
+)
 
 CANDIDATE_SPECIAL_CODES = [
     7,
@@ -37,7 +41,7 @@ def analyze_special_codes(x, feature_names, output_path, codes=None):
         codes = CANDIDATE_SPECIAL_CODES
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator="\n")
         writer.writerow(["feature", "code", "count", "percentage"])
 
         n_rows = x.shape[0]
@@ -94,7 +98,7 @@ def export_feature_analysis(x, feature_names, output_path):
     special_codes = [7, 9, 77, 99, 777, 999]
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator="\n")
 
         writer.writerow(
             [
@@ -192,6 +196,9 @@ def main():
     # Plot the distribution of missing values
     fig = plot_missingness(x_train, feature_names)
     save_figure(fig, "missing_values_distribution")
+
+    fig = plot_missingness_with_cutoff(x_train, feature_names, threshold=0.80)
+    save_figure(fig, "missing_values_distribution_cutoff")
 
     print("\n===== MISSING VALUES =====")
     print("Total missing values:", int(np.sum(nan_mask)))
