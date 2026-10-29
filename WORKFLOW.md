@@ -11,7 +11,7 @@ then come back to the rest when something blocks you.
 
 ## Setup (once)
 
-You need Python 3.11 and `git`. Check with `python3.11 --version`; if the
+You need Python 3.11 (the code also runs on 3.9, the graders' version) and `git`. Check with `python3.11 --version`; if the
 command is missing, install it with `brew install python@3.11` on macOS or
 `sudo apt install python3.11 python3.11-venv` on Ubuntu.
 
@@ -102,24 +102,23 @@ real marks or real days.
 
 | Rule | Why |
 | --- | --- |
-| Only the standard library and NumPy on the graded path | The project description forbids everything else. matplotlib is allowed for plotting only, so it may be imported in `mlproject/plots.py` and `scripts/` and nowhere else. |
+| Only the standard library and NumPy on the graded path | The project description forbids everything else. matplotlib is allowed for plotting only, so it may be imported in `mlproject/plots.py` and nowhere else. |
 | The six functions in `implementations.py` keep their exact signatures | The graders import that file and call them by name. A renamed parameter fails the grading. |
 | `implementations.py` imports nothing of ours | The graders load it as a standalone file. An import of `mlproject` would break it. |
 | No file may contain the word "t-o-d-o" | The official grading test greps every `.py` file for it and fails. Write `*** YOUR CODE HERE ***` instead. |
-| Notebooks contain no `def` and no `class` | Logic trapped in a notebook cannot be tested, reviewed, or reused. See `notebooks/README.md`. |
+| Notebooks contain no `def` and no `class` | Logic trapped in a notebook cannot be tested, reviewed, or reused. |
 | No file over 5 MB may be committed | Stops a dataset csv or a submission file from entering the history, which is painful to undo. |
 | Dependency pins change in one place, with review | Three people bumping NumPy independently is exactly how branches become unmergeable. |
 
 ### Where code goes
 
 - **`implementations.py`** — the six graded methods, and nothing else.
-- **`mlproject/`** — everything reusable: loading, cleaning, features,
-  metrics, cross-validation, plotting. If two people would want it, it goes
+- **`mlproject/`** — everything reusable: cleaning, metrics,
+  cross-validation, plotting. If two people would want it, it goes
   here, with a docstring.
-- **`scripts/`** — things you run to produce an artefact, such as the report
-  figures. Not imported by anything.
-- **`notebooks/`** — exploration, in your own folder. Nothing else may depend
-  on a notebook; if we deleted the whole folder, `run.py` would still work.
+- **`run.py`, `compare_methods.py`, `EDA.py`** — scripts at the repository
+  root that produce the submission, the method comparison table and the
+  report figure. Not imported by anything.
 - **`tests/`** — anything worth not breaking twice.
 
 The rough division of labour follows the module boundaries, so that two people

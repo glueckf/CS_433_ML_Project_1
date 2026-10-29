@@ -8,7 +8,7 @@
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py39"
 # helpers.py is provided by the course and is kept byte-identical to the
 # upstream file. We do not lint or reformat it.
 extend-exclude = ["helpers.py"]
@@ -31,7 +31,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D100", "D103"]
-"scripts/*" = ["D100"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
