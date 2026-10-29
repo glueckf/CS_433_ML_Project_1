@@ -38,7 +38,7 @@ Tested with Python 3.11 (NumPy 2.3) and Python 3.9 (NumPy 1.23).
    produce a byte-identical file.
 
 `python compare_methods.py` reproduces the comparison of all six methods and the
-ablation study from the report (about 5 minutes), and `python EDA.py`
+ablation study from the report, and `python EDA.py`
 regenerates the exploratory statistics and the missing-value figure in
 `reports/`.
 
